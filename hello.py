@@ -1,0 +1,1 @@
+print("CSC 114, let's go!")
