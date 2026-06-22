@@ -90,9 +90,46 @@ model.compile(optimizer="adam",
 - **`loss="sparse_categorical_crossentropy"`** — crossentropy because this is multi-class classification (10 categories), not regression (which would use MSE). "Sparse" specifically because our labels are plain integers (`5`, `0`, `9`...) rather than one-hot vectors — if they were one-hot, we'd use `categorical_crossentropy` instead.
 - **`metrics=["accuracy"]`** — doesn't affect training (only the loss does that); it's just a human-readable score for us to monitor.
 
-### Step 3 — Fit: train the model — **TBD**
+### Step 3 — Fit: train the model ✅
 
-### Step 4 — Predict: test it on new data, save/load — **TBD**
+```python
+# Save ONLY the most accurate model so far, judged by validation accuracy.
+checkpoint = keras.callbacks.ModelCheckpoint(
+    filepath="mnist_best_model.keras",
+    monitor="val_accuracy", mode="max",
+    save_best_only=True, verbose=1)
+
+history = model.fit(train_images, train_labels,
+                    epochs=20, batch_size=128,
+                    validation_data=(test_images, test_labels),
+                    callbacks=[checkpoint])
+```
+
+**What happened (run in the codespace, PyTorch backend):**
+- Trained for 20 epochs, batch size 128. A custom callback printed each epoch's loss, accuracy, and **error rate** (error = 1 − accuracy).
+- Validation accuracy climbed, then peaked and plateaued — classic mild overfitting after the best epoch:
+
+  | Epoch | val_acc | val_err | note |
+  |---|---|---|---|
+  | 13 | 0.9835 | 0.0165 | improved, saved |
+  | **15** | **0.9838** | **0.0162** | **best — saved** |
+  | 16 | 0.9834 | 0.0166 | no improvement |
+  | 20 | 0.9817 | 0.0183 | no improvement |
+
+- **Best epoch:** 15 · **best validation accuracy:** 0.9838 (98.38%) · **lowest error rate:** 0.0162 (1.62%) · **loss at best epoch:** 0.0637.
+- `save_best_only=True` means the file on disk (`mnist_best_model.keras`) is always the single most accurate version, not the last epoch.
+
+### Step 4 — Predict: test it on new data, save/load ✅
+
+```python
+best_model = keras.models.load_model("mnist_best_model.keras")
+probabilities = best_model.predict(test_images[:1])
+predicted_digit = int(probabilities.argmax(axis=1)[0])
+```
+
+**What happened:**
+- Reloaded the saved best model and predicted on one test image → **predicted digit 7, actual 7, confidence 1.0000.**
+- Confirms the full save → load → predict round-trip works.
 
 ---
 
@@ -101,14 +138,14 @@ model.compile(optimizer="adam",
 1. **Attributes / target:** 784 grayscale pixel values per image (28×28 flattened); target is the digit label, 0–9.
 2. **Regression or classification:** Classification (multi-class, 10 categories).
 3. **Optimizer used / why:** Adam — adaptive per-parameter step sizes, the course material's recommended default for a first model; no manual learning-rate tuning required.
-4. **Epochs needed for best result:** *TBD*
-5. **Best accuracy / lowest loss achieved:** *TBD*
-6. **Save model / predict on new input:** *TBD*
-7. **Anything else relevant:** *TBD*
+4. **Epochs needed for best result:** 15 epochs. Validation accuracy peaked at epoch 15; training to 20 epochs did not improve it (the model began to overfit — training accuracy kept rising while validation accuracy drifted down).
+5. **Best accuracy / lowest loss achieved:** 98.38% validation accuracy (error rate 1.62%), with a loss of 0.0637 at that epoch.
+6. **Save model / predict on new input:** Yes. The most accurate model is saved to `mnist_best_model.keras` via `ModelCheckpoint(save_best_only=True)`, then reloaded with `keras.models.load_model(...)` and used to predict. On a test image it predicted digit 7 (actual 7) with 1.0000 confidence.
+7. **Anything else relevant:** Used `ModelCheckpoint` monitoring `val_accuracy` so only the single best version is kept, not the final (overfit) one. A custom callback prints every epoch's loss, accuracy, and error rate to the screen. Trained locally in the codespace on the PyTorch backend (no GPU needed for this small dense network).
 
 ---
 
 ## Submission Checklist
 
-- [ ] `.py` file(s) with the full working model
-- [ ] Text document with all reflection answers filled in
+- [x] `.py` file(s) with the full working model — `model.py`
+- [x] Text document with all reflection answers filled in
