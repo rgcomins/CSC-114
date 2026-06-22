@@ -11,7 +11,7 @@ model = keras.models.load_model("mnist_best_model.keras", compile=False)
 (_, _), (x_test, y_test) = keras.datasets.mnist.load_data()
 
 # Pick an image
-index = 1
+index = 9
 image = x_test[index]
 
 # Preprocess and predict
