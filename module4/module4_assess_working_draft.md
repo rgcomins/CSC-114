@@ -34,8 +34,9 @@ the validation line stop improving? How can you tell from the picture?
 
 **YOUR ANSWER:**
 
-_(Write 3–5 sentences in your own words. Name the epoch, describe what the
-curve shape looks like before and after that point.)_
+We looked at the results, and I think there's no range from 35-50; it was closer to 48.
+(When we told Claude that, it decided we were right.) It doesn't seem to get any worse 
+for quite a while, but it does wobble. (If it was getting worse, it would rise.)
 
 ---
 
@@ -59,8 +60,9 @@ that turnaround point? (Name and explain.)
 
 **YOUR ANSWER:**
 
-_(Write 3–5 sentences. Name it, explain what's actually happening inside the
-model, and make an honest observation about what your specific curve shows.)_
+This is like memorizing flash cards until that's all you can see. Our results didn't get worse 
+(maybe K-fold helped with that?) but more epochs, or doubling the K-fold from 4 to 8, didn't 
+show any difference.
 
 ---
 
@@ -79,7 +81,8 @@ on your agent. What did it suggest, what did you do instead, and why?
 > and found Y" counts as a pushback.
 
 **YOUR ANSWER:**
-
+Agent said that the graph flattens off around 35-50. I pushed back and said "maybe 48-50". Agent
+then changed its mind and agreed with me. 
 ---
 
 **Q5. Name one thing your agent did well that saved you time.**
@@ -89,7 +92,7 @@ on your agent. What did it suggest, what did you do instead, and why?
 > set up the plot-save logic for headless Codespace operation.
 
 **YOUR ANSWER:**
-
+I told it to try 8-fold instead of 4-fold, and it properly did that. 
 ---
 
 ## Part 3 — Why your settings are the right ones
@@ -123,7 +126,8 @@ on your agent. What did it suggest, what did you do instead, and why?
 > before the exam.
 
 **YOUR ANSWER:**
-
+We wanted a linear value (regression) so it wouldn't make sense to put an activation on top of that.
+What we did instead was scale it (so like .1 = $10k, or similar). But that's just normalization. 
 ---
 
 **Q7. 🖊 In your own words.** Using your own training curve as evidence,
@@ -141,7 +145,8 @@ explain why "more epochs = better" is not true for your model.
 **YOUR ANSWER:**
 
 _(Write 3–4 sentences. Reference your actual curve and the epoch numbers.)_
-
+We did the experiment, and past 50 epochs it just wobbles, didn't give better or worse results.
+So there's no reason to go all the way to 200 epochs when 50 works well.
 ---
 
 ## Part 4 — Honest self-check
@@ -157,7 +162,7 @@ to rebuild without help.
 > lower than honest specificity.
 
 **YOUR ANSWER:**
-
+Trust but verify -- I trust the agent, but I always double check it/
 ---
 
 **Q9. 🖊 In your own words.** Explain your model to a classmate in three
@@ -174,7 +179,9 @@ sentences: what it takes in, what it predicts, and how it learns.
 > thousands of times
 
 **YOUR ANSWER:**
-
+The model takes in raw data about housing in California, broken into eight attributes, to create 8 colums and numerous rows. It predicts the price of the home based on these attributes.
+The acutual accuracy of the prediction continued to increased to approximately 48 epocs then there was no significant increase in accuracy for almost an additional 150 epocs.  However there was a small wobbble 
+occurring for each epoc above 50 to 200 epocs. The end results is that the expenditure of resources to do these additional epocs is not justified.
 ---
 
 ## Checklist before submitting
