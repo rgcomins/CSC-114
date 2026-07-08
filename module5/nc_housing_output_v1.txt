@@ -1,0 +1,42 @@
+@rgcomins ➜ /workspaces/CSC-114 (main) $ /usr/local/python/3.12.1/bin/python /workspaces/CSC-114/module5/nc_housing_model_v1.py
+Raw rows: 6155
+Raw columns: ['population', 'households', 'median_income', 'median_house_value', 'total_bedrooms', 'latitude', 'longitude', 'housing_median_age']
+After dropping missing/9999 target rows: 5815
+After dropping bad housing_median_age rows: 5761
+After dropping remaining NaNs: 5637
+Features used: ['population', 'households', 'median_income', 'total_bedrooms', 'latitude', 'longitude', 'housing_median_age']
+Target range before scaling: $12,600 - $1,453,800
+Train data shape: (4509, 7)
+Test data shape: (1128, 7)
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Processing fold #5
+Processing fold #6
+Processing fold #7
+Processing fold #8
+Per-fold MAE (scaled): [0.434, 0.407, 0.411, 0.406, 0.402, 0.414, 0.406, 0.418]
+Mean MAE (scaled): 0.412  ->  $41,227 off, on average
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Processing fold #5
+Processing fold #6
+Processing fold #7
+Processing fold #8
+Saved plot to nc_housing_val_mae.png
+Saved plot to nc_housing_val_mae_truncated.png
+36/36 ━━━━━━━━━━━━━━━━━━━━ 0s 4ms/step - loss: 9.0561 - mean_absolute_error: 0.5540 
+Test MAE (scaled): 0.554  ->  $55,404 off, on average
+36/36 ━━━━━━━━━━━━━━━━━━━━ 0s 2ms/step
+
+First 5 test predictions vs. actual:
+  Predicted: $191,710   Actual: $171,700   Error: $20,010
+  Predicted: $106,456   Actual: $135,500   Error: $-29,044
+  Predicted: $150,456   Actual: $244,200   Error: $-93,744
+  Predicted: $132,658   Actual: $137,700   Error: $-5,042
+  Predicted: $178,244   Actual: $284,200   Error: $-105,956
+Saved plot to nc_housing_pred_vs_actual.png
+Saved plot to nc_housing_residuals.png
