@@ -1,4 +1,4 @@
-s"""
+"""
 Deep Learning with Python, 3rd Edition — Chapter 4
 Example 3: Predicting house prices (regression) on the California Housing dataset.
 
