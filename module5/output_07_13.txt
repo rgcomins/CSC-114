@@ -1,0 +1,77 @@
+@rgcomins ➜ /workspaces/CSC-114 (main) $ /home/codespace/.python/current/bin/python /workspaces/CSC-114/module5/nc_housing_model_v1.py
+Raw rows: 6155
+Raw columns: ['population', 'households', 'median_income', 'median_house_value', 'total_bedrooms', 'latitude', 'longitude', 'housing_median_age']
+After dropping missing/9999 target rows: 5815
+After dropping bad housing_median_age rows: 5761
+After dropping remaining NaNs: 5637
+Features used: ['population', 'households', 'median_income', 'total_bedrooms', 'latitude', 'longitude', 'housing_median_age']
+Target range before scaling: $12,600 - $1,453,800
+Train data shape: (4509, 7)
+Test data shape: (1128, 7)
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Processing fold #5
+Processing fold #6
+Processing fold #7
+Processing fold #8
+Per-fold MAE (scaled): [0.423, 0.405, 0.409, 0.424, 0.387, 0.42, 0.413, 0.43]
+Mean MAE (scaled): 0.414  ->  $41,390 off, on average
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Processing fold #5
+Processing fold #6
+Processing fold #7
+Processing fold #8
+Saved plot to nc_housing_val_mae.png
+Saved plot to nc_housing_val_mae_truncated.png
+36/36 ━━━━━━━━━━━━━━━━━━━━ 0s 4ms/step - loss: 8.1114 - mean_absolute_error: 0.5329 
+Test MAE (scaled): 0.533  ->  $53,289 off, on average
+36/36 ━━━━━━━━━━━━━━━━━━━━ 0s 2ms/step
+
+First 5 test predictions vs. actual:
+  Predicted: $157,142   Actual: $171,700   Error: $-14,558
+  Predicted: $97,838   Actual: $135,500   Error: $-37,662
+  Predicted: $148,342   Actual: $244,200   Error: $-95,858
+  Predicted: $101,943   Actual: $137,700   Error: $-35,757
+  Predicted: $130,389   Actual: $284,200   Error: $-153,811
+Saved plot to nc_housing_pred_vs_actual.png
+
+Worst residuals — check these for data vs. model issues:
+  Predicted=$850,832  Actual=$1,453,800  Error=$-602,968
+population            1.164000e+03
+households            3.870000e+02
+median_income         2.500010e+05
+median_house_value    1.453800e+06
+total_bedrooms        4.210000e+02
+latitude              3.515357e+01
+longitude            -8.081819e+01
+housing_median_age    4.500000e+01
+Name: 3543, dtype: float64
+
+  Predicted=$6,806,750  Actual=$380,000  Error=$6,426,750
+population               907.000000
+households               337.000000
+median_income          35150.000000
+median_house_value    380000.000000
+total_bedrooms           390.000000
+latitude                  35.763684
+longitude                -78.638890
+housing_median_age      2000.000000
+Name: 5501, dtype: float64
+
+  Predicted=$7,004,651  Actual=$297,000  Error=$6,707,651
+population               517.000000
+households               239.000000
+median_income          78750.000000
+median_house_value    297000.000000
+total_bedrooms           258.000000
+latitude                  35.226748
+longitude                -80.871775
+housing_median_age      2000.000000
+Name: 3774, dtype: float64
+
+Saved plot to nc_housing_residuals.png

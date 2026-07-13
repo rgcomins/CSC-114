@@ -157,7 +157,7 @@ def main(data_path, show=False, quick=False, final_epochs=None):
     print(f"Mean MAE (scaled): {mean_mae_scaled:.3f}  ->  ${mean_mae_scaled * TARGET_SCALE:,.0f} off, on average")
 
     # ---- K-fold validation: record the full MAE history per epoch ----
-    num_epochs = 30 if quick else 200
+    num_epochs = 30 if quick else 50
     all_mae_histories = []
     for i in range(k):
         print(f"Processing fold #{i + 1}")
@@ -208,7 +208,7 @@ def main(data_path, show=False, quick=False, final_epochs=None):
     # ---- Train the final model and evaluate on the test set ----
     # Default final_epochs below is a placeholder — replace it with the epoch
     # where YOUR truncated curve above actually flattens (pass --final-epochs N).
-    epochs_to_use = final_epochs or (30 if quick else 100)
+    epochs_to_use = final_epochs or (30 if quick else 50)
     model = get_model(x_train.shape[1])
     model.fit(x_train, y_train, epochs=epochs_to_use, batch_size=16, verbose=0)
     test_mse, test_mae = model.evaluate(x_test, y_test)
@@ -237,9 +237,21 @@ def main(data_path, show=False, quick=False, final_epochs=None):
     plt.legend()
     _output(plt, "nc_housing_pred_vs_actual.png", show)
 
+    residuals = predictions_dollars - actual_dollars
+
+    # ---- Diagnostic: inspect worst residuals (data vs. model check) ----
+    worst_idx = np.argsort(np.abs(residuals))[-3:]
+    print("\nWorst residuals — check these for data vs. model issues:")
+    for idx in worst_idx:
+        orig_row = test_idx[idx]
+        print(f"  Predicted=${predictions_dollars[idx]:,.0f}  "
+              f"Actual=${actual_dollars[idx]:,.0f}  "
+              f"Error=${residuals[idx]:,.0f}")
+        print(df.iloc[orig_row])
+        print()
+
     # ---- Error graph 2: residual (error) distribution ----
     plt.clf()
-    residuals = predictions_dollars - actual_dollars
     plt.hist(residuals, bins=30)
     plt.xlabel("Prediction error ($)  [predicted − actual]")
     plt.ylabel("Count")
