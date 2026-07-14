@@ -5,7 +5,7 @@ Adapted from Deep Learning with Python, 3rd Ed., Chapter 4, Example 3
 dataset (D. Michael Senter, ACS 2018 5-year estimates).
 
 Run:  python nc_housing_regression.py
-Data: NC_Housing_Prices_2018_cleanedd.csv (expected alongside this script,
+Data: NC_Housing_Prices_2018_age_cleaned.csv (expected alongside this script,
       or pass --data /path/to/file.csv)
 
 By default plots are saved to PNG files so this runs headless in a
@@ -39,7 +39,7 @@ KEEP_COLS = [
     "households",
     "median_income",
     "median_house_value",
-    "total_bedrooms",
+    "total_rooms",
     "latitude",
     "longitude",
     "housing_median_age",
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data",
-        default="module5/NC_Housing_Prices_2018_cleanedd.csv",
+        default="project/NC_Housing_Prices_ready.csv",
         help="Path to the NC Housing CSV.",
     )
     parser.add_argument(
