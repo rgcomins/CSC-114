@@ -42,7 +42,8 @@ cleaning changes. Environment is GitHub Codespaces, Keras 3.14.1 on the
 | 6 | Controlled before/after A/B | `project/before_after_residuals.py` — toggles ONLY the `age==2000` rows: test MAE **$54,370 → $44,522** (~18%), worst error **$6.77M → $594K**. Figure: `project/nc_housing_residuals_before_after.png` |
 | 7 | Update charter | Filled "Definition of good enough" with measured numbers + plot links |
 | 8 | Write reflections | `Sprint 1 Reflection.md` + `Sprint 2 Reflection.md` — numeric content filled; graded prose drafted from `nc_housing_notes_v1/v2.md`, flagged for your review |
-| 9 | Commit | Branch `sprint-results-writeup`, commit `0ee0fd4`, 11 files. **Not pushed.** |
+| 9 | `total_rooms` allowlist review | See Incident 3 — confirmed mislabel (not wrong data); fixed docs only, no behavior change |
+| 10 | Commit | Branch `sprint-results-writeup` (multiple commits; see `git log`). **Not pushed to origin.** |
 
 ---
 
@@ -58,6 +59,21 @@ the model runs on the "ready" file — but the filename is a trap for future you
 **Incident 2 — Long CPU-bound run time.**
 The full (non-`--quick`) K=8 run trains 17 models and took ~18 min on Codespaces
 CPU. Fine, just plan for it; use `--quick` for smoke tests.
+
+**Incident 3 — `total_rooms` vs `total_bedrooms` allowlist — CONFIRMED mislabel, RESOLVED (docs only).**
+`KEEP_COLS` allowlists `total_rooms`, the column the notes flagged as the
+unrecoverable B25041 duplicate. BUT verified empirically: in the raw file that
+carries both, `total_rooms` and `total_bedrooms` are **byte-for-byte identical**
+(0 differing rows) — both are the same B25041 bedroom counts. So this is a
+**mislabeling** issue, not "training on wrong data" — the numbers are correct,
+the name is not. The originally-proposed one-line swap (`total_rooms` →
+`total_bedrooms`) would **crash** the default run: `NC_Housing_Prices_ready.csv`
+(argparse default) has `total_rooms` and no `total_bedrooms`, and `usecols`
+raises on a missing column. Switching to the docstring's `age_cleaned.csv` to
+get `total_bedrooms` would reintroduce the age≈2000 outliers (Incident 1).
+**Resolution chosen:** keep `total_rooms` in `KEEP_COLS`, fix the stale/backwards
+comment + docstring to say the column really holds bedroom counts, and align the
+docstring's Run/Data lines with the actual filename. Zero prediction change.
 
 ---
 

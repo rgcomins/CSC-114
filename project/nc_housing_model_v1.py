@@ -4,9 +4,9 @@ Adapted from Deep Learning with Python, 3rd Ed., Chapter 4, Example 3
 (California Housing scalar regression), reskinned onto the NC Housing
 dataset (D. Michael Senter, ACS 2018 5-year estimates).
 
-Run:  python nc_housing_regression.py
-Data: NC_Housing_Prices_2018_age_cleaned.csv (expected alongside this script,
-      or pass --data /path/to/file.csv)
+Run:  python nc_housing_model_v1.py
+Data: NC_Housing_Prices_ready.csv (the argparse default; or pass
+      --data /path/to/file.csv)
 
 By default plots are saved to PNG files so this runs headless in a
 Codespace. Pass --show to open plot windows instead.
@@ -31,15 +31,23 @@ from keras import layers
 TARGET_COL = "median_house_value"
 TARGET_SCALE = 100_000  # same convention as the CA Housing example — sanity-checked at runtime below
 
-# Only these columns are trusted from the raw CSV. Anything else in the file
-# (phantom "Unnamed: N" columns from trailing commas, or columns we haven't
-# vetted, like total_rooms before it was dropped) is ignored at read time.
+# Only these columns are trusted from the raw CSV. Phantom "Unnamed: N"
+# columns from trailing commas in the source file are excluded here so they
+# can't silently wipe the dataset via dropna() later.
+#
+# NOTE on total_rooms: in this dataset total_rooms and total_bedrooms were both
+# pulled from ACS table B25041 (bedrooms) and are byte-for-byte identical, so
+# the values stored under "total_rooms" are really bedroom counts (mislabeled
+# in the source). The cleaned input (NC_Housing_Prices_ready.csv) ships only
+# the "total_rooms" name, so that is what we allowlist. Renaming this entry to
+# "total_bedrooms" would not change any prediction but would fail to load
+# against that file, which has no such column.
 KEEP_COLS = [
     "population",
     "households",
     "median_income",
     "median_house_value",
-    "total_rooms",
+    "total_rooms",  # really B25041 bedroom counts — see NOTE above
     "latitude",
     "longitude",
     "housing_median_age",
