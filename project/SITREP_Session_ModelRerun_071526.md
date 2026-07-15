@@ -11,12 +11,13 @@ Claude Code session (per handoff brief) re-ran the K=8 regression script end
 to end. All 4 required plots generated, dollar-formatted predictions
 produced, CV and test MAE captured. Source review of `nc_housing_model_v1.py`
 resolved both open items from the prior SITREP: **the feature allowlist bug
-is confirmed** — `total_rooms` (should be dropped) is kept, `total_bedrooms`
-(should be kept) is never loaded — and **the housing_median_age zero-drop
-result is expected**, not a bug (bad-age rows were already removed upstream,
-per the script's own docstring). Neither blocks Check-In 1 (pipeline runs,
-produces output), but the allowlist bug should be fixed before Check-In 2,
-since results aren't trustworthy until it's training on the right column.
+is confirmed and now fixed** — turned out to be a pure labeling bug, not a
+wrong-data bug (total_rooms and total_bedrooms are identical duplicate
+columns in the raw CSV, so the values being trained on were correct the
+whole time; only the column name was wrong) — and **the housing_median_age
+zero-drop result is expected**, not a bug (bad-age rows were already
+removed upstream, per the script's own docstring). Neither issue ever
+blocked Check-In 1. Previously reported metrics remain valid.
 
 ---
 
@@ -52,16 +53,15 @@ since results aren't trustworthy until it's training on the right column.
 
 ## INCIDENTS / FRICTION ENCOUNTERED
 
-**Incident 1 — total_rooms/total_bedrooms allowlist mismatch — CONFIRMED, OPEN FIX**
-Source review of `nc_housing_model_v1.py` confirms it: `KEEP_COLS` lists
-`total_rooms`, not `total_bedrooms`. Since `total_rooms` is the documented
-unrecoverable duplicate (wrong ACS table B25041 pulled for both columns), the
-model is training on the wrong column. The script's own comment is stale/
-backwards too — it references "total_rooms before it was dropped," which
-doesn't match what the list actually does.
-**Fix:** in `KEEP_COLS`, swap `"total_rooms"` → `"total_bedrooms"`; clean up
-the misleading comment while there. `feature_cols` downstream derives itself
-from `df.columns`, so no other code changes needed.
+**Incident 1 — total_rooms/total_bedrooms allowlist mismatch — RESOLVED**
+Confirmed via source review, then root-caused and fixed by Rick: this was a
+pure labeling bug, not a wrong-data bug. `total_rooms` and `total_bedrooms`
+are identical duplicate columns in the raw CSV (both got the wrong ACS table
+B25041 pulled), so the feature values the model trained on were correct
+bedroom counts the whole time — the only problem was the code calling that
+column `total_rooms`. Fix applied: `KEEP_COLS` now lists `total_bedrooms`.
+No re-training required for validity — previously reported metrics still
+hold, since the underlying data never changed.
 
 **Incident 2 — housing_median_age filter dropped 0 rows this run — RESOLVED**
 Expected behavior, not a bug. The script's docstring names the expected
@@ -91,7 +91,6 @@ so the two don't drift, but non-blocking.
 
 | Priority | Action |
 |---|---|
-| HIGH | Apply the one-line `KEEP_COLS` fix (`total_rooms` → `total_bedrooms`) and re-run |
 | MEDIUM | Write the 3 graded reflection answers offline, in your own words |
 | MEDIUM | Push branch, grab link, submit Check-In 1 |
 | LOW | Align `argparse` default path with docstring's stated filename |
