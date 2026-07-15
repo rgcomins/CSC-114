@@ -1,0 +1,76 @@
+Raw rows: 5637
+Raw columns: ['population', 'households', 'median_income', 'median_house_value', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
+After dropping missing/9999 target rows: 5635
+After dropping bad housing_median_age rows: 5635
+After dropping remaining NaNs: 5635
+Features used: ['population', 'households', 'median_income', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
+Target range before scaling: $12,600 - $1,453,800
+Train data shape: (4508, 7)
+Test data shape: (1127, 7)
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Processing fold #5
+Processing fold #6
+Processing fold #7
+Processing fold #8
+Per-fold MAE (scaled): [0.418, 0.425, 0.387, 0.411, 0.435, 0.415, 0.398, 0.424]
+Mean MAE (scaled): 0.414  ->  $41,407 off, on average
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Processing fold #5
+Processing fold #6
+Processing fold #7
+Processing fold #8
+Saved plot to nc_housing_val_mae.png
+Saved plot to nc_housing_val_mae_truncated.png
+[1m 1/36[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m0s[0m 6ms/step - loss: 0.3060 - mean_absolute_error: 0.4025[1m13/36[0m [32m━━━━━━━[0m[37m━━━━━━━━━━━━━[0m [1m0s[0m 4ms/step - loss: 0.3242 - mean_absolute_error: 0.3995[1m27/36[0m [32m━━━━━━━━━━━━━━━[0m[37m━━━━━[0m [1m0s[0m 4ms/step - loss: 0.3854 - mean_absolute_error: 0.4130[1m36/36[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 4ms/step - loss: 0.4550 - mean_absolute_error: 0.4347
+Test MAE (scaled): 0.435  ->  $43,466 off, on average
+[1m 1/36[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m0s[0m 2ms/step[1m28/36[0m [32m━━━━━━━━━━━━━━━[0m[37m━━━━━[0m [1m0s[0m 2ms/step[1m36/36[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 2ms/step
+
+First 5 test predictions vs. actual:
+  Predicted: $144,068   Actual: $110,000   Error: $34,068
+  Predicted: $113,412   Actual: $150,400   Error: $-36,988
+  Predicted: $150,267   Actual: $244,200   Error: $-93,933
+  Predicted: $150,084   Actual: $137,700   Error: $12,384
+  Predicted: $216,128   Actual: $222,800   Error: $-6,672
+Saved plot to nc_housing_pred_vs_actual.png
+
+Worst residuals — check these for data vs. model issues:
+  Predicted=$126,731  Actual=$608,200  Error=$-481,469
+population              2604.000000
+households               943.000000
+median_income          41365.000000
+median_house_value    608200.000000
+total_rooms             1090.000000
+latitude                  35.135205
+longitude                -80.776266
+housing_median_age        34.000000
+Name: 3140, dtype: float64
+
+  Predicted=$959,930  Actual=$1,453,800  Error=$-493,870
+population            1.164000e+03
+households            3.870000e+02
+median_income         2.500010e+05
+median_house_value    1.453800e+06
+total_rooms           4.210000e+02
+latitude              3.515357e+01
+longitude            -8.081819e+01
+housing_median_age    4.500000e+01
+Name: 3261, dtype: float64
+
+  Predicted=$436,863  Actual=$1,044,300  Error=$-607,438
+population            2.474000e+03
+households            8.030000e+02
+median_income         1.369950e+05
+median_house_value    1.044300e+06
+total_rooms           8.480000e+02
+latitude              3.518772e+01
+longitude            -8.083598e+01
+housing_median_age    5.100000e+01
+Name: 3358, dtype: float64
+
+Saved plot to nc_housing_residuals.png
