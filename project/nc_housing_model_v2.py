@@ -19,6 +19,11 @@ WHAT'S NEW IN v2 (vs. v1):
        overwrites an old one, and nothing has to be hand-saved.
     3. The model itself is UNCHANGED from v1. The "one change" experiment
        comes later, once we've confirmed v2 behaves exactly like v1.
+    4. MSE and RMSE are now surfaced alongside MAE (K-fold pass 1, the
+       per-epoch curve, and final test evaluation), plus two new stamped
+       plots: nc_housing_val_mse_{stamp}.png and its truncated twin. Keras
+       was already computing these values as the training loss — they were
+       just being discarded before. No retraining behavior changed.
 
 Run:
     python nc_housing_model_v2.py                  # save timestamped PNGs + log
@@ -166,7 +171,7 @@ def load_and_clean(path):
 
 
 # ---------------------------------------------------------------------------
-# Model (UNCHANGED from v1 — do not touch until the "one change" step)
+# Model (tested with "one change rule": 64x64, 128x128, 64x64x64)
 # ---------------------------------------------------------------------------
 
 def get_model(input_dim):
@@ -177,12 +182,12 @@ def get_model(input_dim):
     - Loss is MSE (what training minimizes); MAE is the human-readable metric
       (average dollars off, once we multiply back by TARGET_SCALE).
     - Regression has no "accuracy" — that's a classification idea.
-    Testing with 128 per layer.
+    Testing with 64 per layer, 2 layers.
     """
     model = keras.Sequential(
         [
-            layers.Dense(128, activation="relu"),
-            layers.Dense(128),
+            layers.Dense(64, activation="relu"),
+            layers.Dense(64, activation="relu"),
             layers.Dense(1),
         ]
     )
@@ -249,6 +254,10 @@ def main(data_path, outdir, stamp, show=False, quick=False, final_epochs=None):
     num_val_samples = len(x_train) // k
     num_epochs = 10 if quick else 50
     all_scores = []
+    all_mse_scores = []  # MSE was already being computed by evaluate() below —
+                          # just discarded with "_". Keeping it now: it's the
+                          # actual loss the optimizer minimizes; MAE is only the
+                          # human-friendly readout.
     for i in range(k):
         print(f"Processing fold #{i + 1}")
         fold_x_val = x_train[i * num_val_samples : (i + 1) * num_val_samples]
@@ -269,18 +278,31 @@ def main(data_path, outdir, stamp, show=False, quick=False, final_epochs=None):
             batch_size=16,
             verbose=0,
         )
-        _, val_mae = model.evaluate(fold_x_val, fold_y_val, verbose=0)
+        val_mse, val_mae = model.evaluate(fold_x_val, fold_y_val, verbose=0)
         all_scores.append(val_mae)
+        all_mse_scores.append(val_mse)
 
     print("Per-fold MAE (scaled):", [round(v, 3) for v in all_scores])
     mean_mae_scaled = float(np.mean(all_scores))
     print(f"Mean MAE (scaled): {mean_mae_scaled:.3f}  ->  ${mean_mae_scaled * TARGET_SCALE:,.0f} off, on average")
+
+    print("Per-fold MSE (scaled):", [round(v, 3) for v in all_mse_scores])
+    mean_mse_scaled = float(np.mean(all_mse_scores))
+    mean_rmse_scaled = mean_mse_scaled ** 0.5
+    print(f"Mean MSE (scaled): {mean_mse_scaled:.3f}  (squared-scaled-error units — not directly $-readable)")
+    print(f"Mean RMSE (scaled): {mean_rmse_scaled:.3f}  ->  ${mean_rmse_scaled * TARGET_SCALE:,.0f} (root-mean-squared error, same $ units as MAE)")
+    print(f"RMSE - MAE gap (scaled): {mean_rmse_scaled - mean_mae_scaled:.3f}  "
+          f"-> a bigger gap means a handful of large misses are driving the error, not a broad spread")
 
     # ---- K-fold validation, pass 2: full per-epoch MAE history ----
     # Same folds, but this time we keep the validation MAE at every epoch so we
     # can plot the curve and find where it stops improving (the turnaround).
     num_epochs = 30 if quick else 50
     all_mae_histories = []
+    all_mse_histories = []  # history.history["val_loss"] IS validation MSE,
+                             # since compile(loss="mean_squared_error") — Keras
+                             # was already recording this every epoch, it just
+                             # wasn't being pulled out before.
     for i in range(k):
         print(f"Processing fold #{i + 1}")
         fold_x_val = x_train[i * num_val_samples : (i + 1) * num_val_samples]
@@ -303,10 +325,19 @@ def main(data_path, outdir, stamp, show=False, quick=False, final_epochs=None):
             verbose=0,
         )
         all_mae_histories.append(history.history["val_mean_absolute_error"])
+        all_mse_histories.append(history.history["val_loss"])
 
     # Average the per-epoch validation MAE across all K folds.
     average_mae_history = [
         np.mean([h[i] for h in all_mae_histories]) for i in range(num_epochs)
+    ]
+
+    # Same, for MSE — the actual loss the optimizer is minimizing. Since MSE
+    # squares each miss before averaging, this curve is more sensitive to the
+    # handful of large tail misses than the MAE curve is, and can show an
+    # overfitting turnaround more sharply.
+    average_mse_history = [
+        np.mean([h[i] for h in all_mse_histories]) for i in range(num_epochs)
     ]
 
     # Plot the full validation MAE curve (scaled units, matching the book).
@@ -330,6 +361,28 @@ def main(data_path, outdir, stamp, show=False, quick=False, final_epochs=None):
     plt.title("Average validation MAE (first 10 epochs dropped) — NC Housing")
     _output(plt, val_mae_trunc_path, show)
 
+    # Plot the full validation MSE curve — same idea as the MAE plot above,
+    # but on the loss the model actually trains against.
+    plt.clf()
+    val_mse_path = stamped_path(outdir, "nc_housing_val_mse", stamp, "png")
+    epochs = range(1, len(average_mse_history) + 1)
+    plt.plot(epochs, average_mse_history)
+    plt.xlabel("Epochs")
+    plt.ylabel("Validation MSE (scaled)")
+    plt.title("Average validation MSE per epoch — NC Housing")
+    _output(plt, val_mse_path, show)
+
+    # Truncated MSE curve, same first-10-epochs-dropped convention as the MAE plot.
+    plt.clf()
+    val_mse_trunc_path = stamped_path(outdir, "nc_housing_val_mse_truncated", stamp, "png")
+    truncated_mse_history = average_mse_history[10:]
+    epochs = range(10, len(truncated_mse_history) + 10)
+    plt.plot(epochs, truncated_mse_history)
+    plt.xlabel("Epochs")
+    plt.ylabel("Validation MSE (scaled)")
+    plt.title("Average validation MSE (first 10 epochs dropped) — NC Housing")
+    _output(plt, val_mse_trunc_path, show)
+
     # ---- Train the final model and evaluate on the held-out test set ----
     # final_epochs is a placeholder until you read your OWN turnaround epoch off
     # the truncated curve above and pass it with --final-epochs N.
@@ -337,7 +390,12 @@ def main(data_path, outdir, stamp, show=False, quick=False, final_epochs=None):
     model = get_model(x_train.shape[1])
     model.fit(x_train, y_train, epochs=epochs_to_use, batch_size=16, verbose=0)
     test_mse, test_mae = model.evaluate(x_test, y_test)
+    test_rmse = test_mse ** 0.5
+    print(f"Test MSE (scaled): {test_mse:.3f}  (squared-scaled-error units — not directly $-readable)")
     print(f"Test MAE (scaled): {test_mae:.3f}  ->  ${test_mae * TARGET_SCALE:,.0f} off, on average")
+    print(f"Test RMSE (scaled): {test_rmse:.3f}  ->  ${test_rmse * TARGET_SCALE:,.0f} (root-mean-squared error, same $ units as MAE)")
+    print(f"RMSE - MAE gap (scaled): {test_rmse - test_mae:.3f}  "
+          f"-> a bigger gap means a handful of large misses are driving the error, not a broad spread")
 
     # ---- Generate predictions on the test set, converted back to dollars ----
     predictions_scaled = model.predict(x_test)

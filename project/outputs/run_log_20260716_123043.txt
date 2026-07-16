@@ -1,0 +1,86 @@
+Run timestamp: 20260716_123043
+Writing plots and this log to: C:\Users\cominsr6423\Documents\GitHub\CSC-114\project\outputs
+Console log: outputs\run_log_20260716_123043.txt
+
+Raw rows: 5637
+Raw columns: ['population', 'households', 'median_income', 'median_house_value', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
+After dropping missing/9999 target rows: 5635
+After dropping bad housing_median_age rows: 5635
+After dropping remaining NaNs: 5635
+Features used: ['population', 'households', 'median_income', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
+Target range before scaling: $12,600 - $1,453,800
+Train data shape: (4508, 7)
+Test data shape: (1127, 7)
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Per-fold MAE (scaled): [0.419, 0.4, 0.421, 0.414]
+Mean MAE (scaled): 0.414  ->  $41,375 off, on average
+Per-fold MSE (scaled): [0.443, 0.342, 0.469, 0.435]
+Mean MSE (scaled): 0.422  (squared-scaled-error units — not directly $-readable)
+Mean RMSE (scaled): 0.650  ->  $64,988 (root-mean-squared error, same $ units as MAE)
+RMSE - MAE gap (scaled): 0.236  -> a bigger gap means a handful of large misses are driving the error, not a broad spread
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Saved plot to outputs\nc_housing_val_mae_20260716_123043.png
+Saved plot to outputs\nc_housing_val_mae_truncated_20260716_123043.png
+Saved plot to outputs\nc_housing_val_mse_20260716_123043.png
+Saved plot to outputs\nc_housing_val_mse_truncated_20260716_123043.png
+
+[1m 1/36[0m [37m====================[0m [1m0s[0m 4ms/step - loss: 0.3075 - mean_absolute_error: 0.4039
+[1m23/36[0m [32m============[0m[37m========[0m [1m0s[0m 2ms/step - loss: 0.4222 - mean_absolute_error: 0.4159
+[1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 2ms/step - loss: 0.4300 - mean_absolute_error: 0.4212
+Test MSE (scaled): 0.430  (squared-scaled-error units — not directly $-readable)
+Test MAE (scaled): 0.421  ->  $42,123 off, on average
+Test RMSE (scaled): 0.656  ->  $65,576 (root-mean-squared error, same $ units as MAE)
+RMSE - MAE gap (scaled): 0.235  -> a bigger gap means a handful of large misses are driving the error, not a broad spread
+
+[1m 1/36[0m [37m====================[0m [1m0s[0m 2ms/step
+[1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 1ms/step
+
+First 5 test predictions vs. actual:
+  Predicted: $139,840   Actual: $110,000   Error: $29,840
+  Predicted: $112,373   Actual: $150,400   Error: $-38,027
+  Predicted: $166,378   Actual: $244,200   Error: $-77,822
+  Predicted: $121,336   Actual: $137,700   Error: $-16,364
+  Predicted: $220,619   Actual: $222,800   Error: $-2,181
+Saved plot to outputs\nc_housing_pred_vs_actual_20260716_123043.png
+
+Worst residuals — check these for data vs. model issues:
+  Predicted=$986,735  Actual=$1,453,800  Error=$-467,065
+population            1.164000e+03
+households            3.870000e+02
+median_income         2.500010e+05
+median_house_value    1.453800e+06
+total_rooms           4.210000e+02
+latitude              3.515357e+01
+longitude            -8.081819e+01
+housing_median_age    4.500000e+01
+Name: 3261, dtype: float64
+
+  Predicted=$115,664  Actual=$608,200  Error=$-492,536
+population              2604.000000
+households               943.000000
+median_income          41365.000000
+median_house_value    608200.000000
+total_rooms             1090.000000
+latitude                  35.135205
+longitude                -80.776266
+housing_median_age        34.000000
+Name: 3140, dtype: float64
+
+  Predicted=$426,916  Actual=$1,044,300  Error=$-617,384
+population            2.474000e+03
+households            8.030000e+02
+median_income         1.369950e+05
+median_house_value    1.044300e+06
+total_rooms           8.480000e+02
+latitude              3.518772e+01
+longitude            -8.083598e+01
+housing_median_age    5.100000e+01
+Name: 3358, dtype: float64
+
+Saved plot to outputs\nc_housing_residuals_20260716_123043.png

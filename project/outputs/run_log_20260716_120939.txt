@@ -1,0 +1,79 @@
+Run timestamp: 20260716_120939
+Writing plots and this log to: C:\Users\cominsr6423\Documents\GitHub\CSC-114\project\outputs
+Console log: outputs\run_log_20260716_120939.txt
+
+Raw rows: 5637
+Raw columns: ['population', 'households', 'median_income', 'median_house_value', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
+After dropping missing/9999 target rows: 5635
+After dropping bad housing_median_age rows: 5635
+After dropping remaining NaNs: 5635
+Features used: ['population', 'households', 'median_income', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
+Target range before scaling: $12,600 - $1,453,800
+Train data shape: (4508, 7)
+Test data shape: (1127, 7)
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Per-fold MAE (scaled): [0.421, 0.417, 0.434, 0.448]
+Mean MAE (scaled): 0.430  ->  $42,991 off, on average
+Processing fold #1
+Processing fold #2
+Processing fold #3
+Processing fold #4
+Saved plot to outputs\nc_housing_val_mae_20260716_120939.png
+Saved plot to outputs\nc_housing_val_mae_truncated_20260716_120939.png
+
+[1m 1/36[0m [37m====================[0m [1m0s[0m 5ms/step - loss: 0.3492 - mean_absolute_error: 0.4310
+[1m17/36[0m [32m=========[0m[37m===========[0m [1m0s[0m 3ms/step - loss: 0.4617 - mean_absolute_error: 0.4236
+[1m32/36[0m [32m=================[0m[37m===[0m [1m0s[0m 3ms/step - loss: 0.4863 - mean_absolute_error: 0.4356
+[1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 3ms/step - loss: 0.4645 - mean_absolute_error: 0.4300
+Test MAE (scaled): 0.430  ->  $42,999 off, on average
+
+[1m 1/36[0m [37m====================[0m [1m0s[0m 3ms/step
+[1m24/36[0m [32m=============[0m[37m=======[0m [1m0s[0m 2ms/step
+[1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 2ms/step
+
+First 5 test predictions vs. actual:
+  Predicted: $130,757   Actual: $110,000   Error: $20,757
+  Predicted: $151,011   Actual: $150,400   Error: $611
+  Predicted: $144,628   Actual: $244,200   Error: $-99,572
+  Predicted: $138,641   Actual: $137,700   Error: $941
+  Predicted: $248,007   Actual: $222,800   Error: $25,207
+Saved plot to outputs\nc_housing_pred_vs_actual_20260716_120939.png
+
+Worst residuals — check these for data vs. model issues:
+  Predicted=$112,755  Actual=$608,200  Error=$-495,445
+population              2604.000000
+households               943.000000
+median_income          41365.000000
+median_house_value    608200.000000
+total_rooms             1090.000000
+latitude                  35.135205
+longitude                -80.776266
+housing_median_age        34.000000
+Name: 3140, dtype: float64
+
+  Predicted=$891,855  Actual=$1,453,800  Error=$-561,945
+population            1.164000e+03
+households            3.870000e+02
+median_income         2.500010e+05
+median_house_value    1.453800e+06
+total_rooms           4.210000e+02
+latitude              3.515357e+01
+longitude            -8.081819e+01
+housing_median_age    4.500000e+01
+Name: 3261, dtype: float64
+
+  Predicted=$393,201  Actual=$1,044,300  Error=$-651,099
+population            2.474000e+03
+households            8.030000e+02
+median_income         1.369950e+05
+median_house_value    1.044300e+06
+total_rooms           8.480000e+02
+latitude              3.518772e+01
+longitude            -8.083598e+01
+housing_median_age    5.100000e+01
+Name: 3358, dtype: float64
+
+Saved plot to outputs\nc_housing_residuals_20260716_120939.png
