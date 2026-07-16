@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predicting NC Housing Prices — CSC-114 Science Fair</title>
+<style>
+/* ============================================================= *
+ *  PALETTE (dark, from dataviz reference — validated dark steps) *
+ * ============================================================= */
+:root{
+  --plane:#0d0d0d;          /* page plane            */
+  --surface:#1a1a19;        /* slide/chart surface   */
+  --surface-2:#222220;      /* raised card           */
+  --ink:#ffffff;            /* primary text          */
+  --ink-2:#c3c2b7;          /* secondary text        */
+  --muted:#898781;          /* axis / labels         */
+  --grid:#2c2c2a;           /* hairline gridline     */
+  --axis:#383835;           /* baseline / axis       */
+  --border:rgba(255,255,255,0.10);
+
+  --blue:#3987e5;           /* series 1 / current    */
+  --orange:#d95926;         /* series 6 / experiment */
+  --green:#0ca30c;          /* status good           */
+  --red:#e66767;            /* status critical       */
+  --violet:#9085e9;
+  --ref:#6f6e69;            /* reference grey bar     */
+
+  --font:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --maxw:1120px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--plane);
+  color:var(--ink);
+  font-family:var(--font);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============================ DECK ============================ */
+#deck{position:fixed;inset:0;display:grid;place-items:center;padding:3.2vw 3.6vw 5.2vh}
+.slide{
+  position:absolute;inset:0;
+  display:none;
+  grid-template-rows:1fr;
+  align-content:center;
+  width:100%;max-width:var(--maxw);
+  margin:0 auto;
+  padding:3.6vh 0 6vh;
+  animation:fade .38s ease both;
+}
+.slide.active{display:grid}
+@keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* kicker / panel label */
+.kicker{
+  font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--blue);font-weight:600;margin-bottom:.7rem;
+  display:flex;align-items:center;gap:.6rem;
+}
+.kicker::before{content:"";width:26px;height:2px;background:var(--blue);border-radius:2px}
+
+h1{font-size:clamp(2.2rem,5.4vw,4rem);line-height:1.03;letter-spacing:-.02em;font-weight:800}
+h2{font-size:clamp(1.5rem,3.4vw,2.5rem);line-height:1.08;letter-spacing:-.015em;font-weight:750;margin-bottom:1.1rem}
+h3{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.3rem}
+p{color:var(--ink-2);font-size:clamp(.98rem,1.5vw,1.18rem);line-height:1.5;max-width:60ch}
+strong{color:var(--ink);font-weight:700}
+.accent{color:var(--blue)}
+.pos{color:var(--green)}
+.neg{color:var(--red)}
+small{color:var(--muted)}
+
+/* bullet lists */
+ul.pts{list-style:none;display:flex;flex-direction:column;gap:.85rem;margin-top:.4rem}
+ul.pts>li{position:relative;padding-left:1.7rem;color:var(--ink-2);font-size:clamp(.98rem,1.5vw,1.16rem);line-height:1.45;max-width:62ch}
+ul.pts>li::before{content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;border-radius:2px;background:var(--blue)}
+ul.pts>li.ok::before{background:var(--green)}
+ul.pts>li.no::before{background:var(--red)}
+ul.pts>li em{color:var(--ink);font-style:normal;font-weight:650}
+
+/* layout helpers */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;align-items:center;height:100%}
+.cols.wide-r{grid-template-columns:0.85fr 1.15fr}
+.cols.wide-l{grid-template-columns:1.15fr 0.85fr}
+.stack{display:flex;flex-direction:column;justify-content:center;gap:.6rem}
+.center{display:flex;flex-direction:column;justify-content:center;height:100%}
+
+/* figure / exhibit card (frames the white matplotlib PNGs) */
+.figure{
+  background:#fbfbf9;border-radius:14px;padding:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);border:1px solid var(--border);
+}
+.figure img{display:block;width:100%;height:auto;border-radius:6px}
+.figure.dual img{max-height:34vh;object-fit:contain}
+.figcap{margin-top:.9rem;color:var(--muted);font-size:.86rem;line-height:1.4;text-align:center}
+.exhibit-row{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-top:.4rem}
+.tile{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem}
+.tile .num{font-size:clamp(1.6rem,3.4vw,2.4rem);font-weight:800;line-height:1;letter-spacing:-.02em}
+.tile .lbl{color:var(--muted);font-size:.82rem;margin-top:.45rem;line-height:1.3}
+
+/* cards / callouts */
+.card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:1.4rem 1.6rem}
+.callout{border-left:3px solid var(--blue);background:rgba(57,135,229,.08);border-radius:0 12px 12px 0;padding:1rem 1.3rem;color:var(--ink-2);font-size:1.02rem;line-height:1.5}
+.callout.good{border-color:var(--green);background:rgba(12,163,12,.10)}
+.callout.warn{border-color:var(--orange);background:rgba(217,89,38,.10)}
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(.82rem,1.35vw,1rem)}
+th,td{text-align:left;padding:.62rem .8rem;border-bottom:1px solid var(--grid)}
+th{color:var(--muted);font-weight:600;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase}
+td{color:var(--ink-2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr td strong{color:var(--ink)}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.12rem .5rem;border-radius:5px;letter-spacing:.03em}
+.tag.b{background:rgba(57,135,229,.18);color:#8fbdf3}
+.tag.o{background:rgba(217,89,38,.18);color:#f0a07f}
+.tag.g{background:rgba(12,163,12,.18);color:#5fd05f}
+.tag.r{background:rgba(230,103,103,.18);color:#f0a0a0}
+
+/* delta chip (status w/ icon + label, never color alone) */
+.chip{display:inline-flex;align-items:center;gap:.35rem;font-size:.82rem;font-weight:700;
+  padding:.2rem .6rem;border-radius:20px;font-variant-numeric:tabular-nums}
+.chip.worse{background:rgba(230,103,103,.15);color:var(--red)}
+.chip.better{background:rgba(12,163,12,.15);color:var(--green)}
+
+/* legend */
+.legend{display:flex;gap:1.3rem;flex-wrap:wrap;margin:.2rem 0 .9rem;font-size:.85rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:.45rem}
+.legend i{width:13px;height:13px;border-radius:3px;display:inline-block}
+
+/* mermaid */
+.mermaid{display:flex;justify-content:center;font-family:var(--font)!important}
+.mermaid-wrap{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;display:flex;justify-content:center}
+
+/* chart */
+.chart svg{width:100%;height:auto;max-height:44vh;display:block;overflow:visible}
+.chart-title{font-size:.9rem;color:var(--ink-2);margin-bottom:.3rem;font-weight:600}
+
+/* title slide */
+.title-hero{text-align:left}
+.title-hero h1{margin-bottom:1.1rem}
+.title-hero .sub{font-size:clamp(1.1rem,2vw,1.5rem);color:var(--ink-2);font-style:italic;margin-bottom:2rem}
+.meta-row{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.6rem}
+.meta-row .tag{font-size:.82rem;padding:.35rem .7rem;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-2);font-weight:600}
+.posternote{position:absolute;bottom:8vh;right:0;color:var(--muted);font-size:.8rem;transform:rotate(-1.5deg);border:1px dashed var(--axis);padding:.5rem .9rem;border-radius:8px}
+
+/* ============================ CHROME ============================ */
+#bar{position:fixed;left:0;right:0;bottom:0;height:4px;background:var(--surface);z-index:40}
+#bar>i{display:block;height:100%;background:var(--blue);width:0;transition:width .35s ease}
+footer{position:fixed;left:3.6vw;right:3.6vw;bottom:2.2vh;display:flex;justify-content:space-between;
+  align-items:center;z-index:30;font-size:.78rem;color:var(--muted);pointer-events:none}
+footer .panel-label{letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+footer .count{font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.nav{position:fixed;bottom:1.6vh;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;z-index:35}
+.nav button{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);
+  color:var(--ink-2);font-size:1.1rem;cursor:pointer;transition:.15s;display:grid;place-items:center}
+.nav button:hover{background:#2c2c2a;color:var(--ink);border-color:var(--blue)}
+.brandmark{position:fixed;top:2.4vh;right:3.6vw;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);z-index:30;font-weight:600}
+.hint{position:fixed;top:2.4vh;left:3.6vw;font-size:.74rem;color:var(--muted);z-index:30}
+kbd{background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:.05rem .35rem;font-size:.72rem;color:var(--ink-2)}
+
+@media (max-width:820px){
+  .cols,.cols.wide-r,.cols.wide-l,.exhibit-row,.exhibit-row{grid-template-columns:1fr;gap:1.2rem}
+  .slide{padding-top:2vh}
+  p,ul.pts>li{max-width:none}
+}
+</style>
+</head>
+<body>
+
+<div class="brandmark">CSC-114 · AI I</div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> to navigate · <kbd>F</kbd> fullscreen</div>
+
+<div id="deck">
+
+  <!-- 1 · TITLE -->
+  <section class="slide" data-panel="Science Fair">
+    <div class="center title-hero">
+      <div class="kicker">CSC-114 · Artificial Intelligence I · Mini-Project</div>
+      <h1>Predicting NC<br>Housing Prices</h1>
+      <div class="sub">A neural network learns what a North Carolina neighborhood is worth.</div>
+      <p>The twist: our headline result is that the <em>obvious</em> fix — build a bigger model —
+         <strong>didn't work.</strong> Figuring out <em>why</em> is the whole exhibit.</p>
+      <div class="meta-row">
+        <span class="tag">Tabular cohort</span>
+        <span class="tag">Modules 5–8</span>
+        <span class="tag">Solo project</span>
+        <span class="tag">Keras 3 · PyTorch</span>
+      </div>
+    </div>
+    <div class="posternote">🔬 Yes, there is a tri-fold board.</div>
+  </section>
+
+  <!-- 2 · THE BIG QUESTION -->
+  <section class="slide" data-panel="The Big Question">
+    <div class="cols wide-l">
+      <div class="stack">
+        <div class="kicker">The Big Question</div>
+        <h2>Can a machine price a neighborhood?</h2>
+        <ul class="pts">
+          <li>Given what the Census knows about a NC neighborhood — <em>income, population,
+              households, location, housing age</em> — can we predict its <strong>median home value</strong>?</li>
+          <li>One row = one census <em>block group</em> (~600–3,000 people).</li>
+          <li>This is <strong>regression</strong>: the answer is a dollar amount, not a yes/no.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--muted);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase">One block group →</h3>
+        <div class="tiles" style="grid-template-columns:1fr 1fr">
+          <div class="tile"><div class="num" style="font-size:1.3rem">$54,300</div><div class="lbl">median income</div></div>
+          <div class="tile"><div class="num" style="font-size:1.3rem">1,842</div><div class="lbl">population</div></div>
+          <div class="tile"><div class="num" style="font-size:1.3rem">35.8°N</div><div class="lbl">latitude</div></div>
+          <div class="tile"><div class="num" style="font-size:1.3rem">27 yrs</div><div class="lbl">median age</div></div>
+        </div>
+        <div class="callout" style="margin-top:1rem">→ <strong>median home value = ?</strong>
+          <br><small>The model's job: fill in the blank.</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · BACKGROUND / RESKIN -->
+  <section class="slide" data-panel="Background">
+    <div class="cols wide-l">
+      <div class="stack">
+        <div class="kicker">Background</div>
+        <h2>We already did this once</h2>
+        <ul class="pts">
+          <li>Last module we trained a model on <strong>California Housing</strong> (1990 census).</li>
+          <li>This project is a <em>reskin</em>: <strong>same process, new data.</strong></li>
+          <li>Data: D. Michael Senter's <code>NC_Housing_Prices_2018.csv</code> — ACS 2018 5-year
+              estimates + TIGER/Line centroids. Loads with one <code>pd.read_csv()</code>.</li>
+          <li>Why it counts: <em>"same process, on a dataset I wasn't handed."</em></li>
+        </ul>
+      </div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart LR
+  A["🌴 California Housing<br/>1990 · ~20,640 rows<br/>8 features"]:::ca
+  B{{"Same shape<br/>Same workflow"}}:::mid
+  C["🌲 NC Housing<br/>2018 · ~5,600 rows<br/>7 features"]:::nc
+  A --> B --> C
+  classDef ca fill:#222220,stroke:#d95926,color:#fff,stroke-width:2px;
+  classDef nc fill:#222220,stroke:#3987e5,color:#fff,stroke-width:2px;
+  classDef mid fill:#161615,stroke:#898781,color:#c3c2b7;
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · THE DATA -->
+  <section class="slide" data-panel="The Data">
+    <div class="stack center">
+      <div class="kicker">The Data</div>
+      <h2>5,637 NC block groups — some of them lying</h2>
+      <div class="tiles">
+        <div class="tile"><div class="num">5,637</div><div class="lbl">raw rows</div></div>
+        <div class="tile"><div class="num">5,635</div><div class="lbl">after cleaning</div></div>
+        <div class="tile"><div class="num accent">4,508</div><div class="lbl">train rows</div></div>
+        <div class="tile"><div class="num accent">1,127</div><div class="lbl">test rows</div></div>
+        <div class="tile"><div class="num">7</div><div class="lbl">features used</div></div>
+      </div>
+      <ul class="pts" style="margin-top:1.4rem">
+        <li><strong>Features (7):</strong> median&nbsp;income · population · households · total&nbsp;rooms* ·
+            housing&nbsp;median&nbsp;age · latitude · longitude &nbsp; <small>(80/20 split, seed 42)</small></li>
+        <li><strong>Target:</strong> median&nbsp;house&nbsp;value, in dollars.
+            <em>*<code>total_rooms</code> is mislabeled — see next panel.</em></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 · CLEANING SAGA -->
+  <section class="slide" data-panel="The Data">
+    <div class="stack center">
+      <div class="kicker">The Data · Cleaning Saga</div>
+      <h2>Four bugs walk into a dataset</h2>
+      <table>
+        <thead><tr><th>#</th><th>The bug</th><th>What we did</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag b">1</span></td><td><code>total_rooms</code> = <code>total_bedrooms</code> in <strong>every row</strong> (wrong ACS table pulled for both)</td><td>Kept one column; documented values are really bedroom counts. <strong>7 features, not 8.</strong></td></tr>
+          <tr><td><span class="tag b">2</span></td><td><code>9999</code> sentinel in <code>median_house_value</code></td><td>Dropped those rows.</td></tr>
+          <tr><td><span class="tag b">3</span></td><td>A row with <code>housing_median_age == 2018</code> (a "year built" leaked through)</td><td>In-script <code>!= 2018</code> filter.</td></tr>
+          <tr><td><span class="tag r">4</span></td><td><strong>Two rows with age ≈ 2000</strong> — impossible 2,000-year-old houses</td><td>Removed them. <em>This one mattered → Experiment 0.</em></td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn" style="margin-top:1.3rem">Three bugs are cosmetic. The fourth quietly poisoned our worst predictions — and it's the first experiment we'll show you.</div>
+    </div>
+  </section>
+
+  <!-- 6 · HYPOTHESIS -->
+  <section class="slide" data-panel="The Hypothesis">
+    <div class="cols">
+      <div class="stack">
+        <div class="kicker">The Hypothesis</div>
+        <h2>Draw the finish line <em>before</em> you build</h2>
+        <p>The boss fight of this module isn't code — it's deciding what "done" means in advance,
+           so you don't polish forever. We committed to two <strong>measurable</strong> signals, in writing.</p>
+        <div class="callout" style="margin-top:1rem">The <strong>metric</strong> is the ruler.
+           "Good enough" is the <strong>line you draw on it.</strong> A charter needs both.</div>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--muted);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Definition of "good enough"</h3>
+        <ul class="pts">
+          <li class="ok"><strong>Beat the naive baseline</strong> — do better than just predicting the statewide average.</li>
+          <li class="ok"><strong>Find the turnaround epoch</strong> — the point where validation error stops improving.</li>
+        </ul>
+        <div style="margin-top:1.4rem;padding-top:1.1rem;border-top:1px solid var(--grid);color:var(--muted);font-size:.9rem">
+          Both are falsifiable. Both were written down on day one. <span class="pos">Spoiler: we hit both.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · METHOD -->
+  <section class="slide" data-panel="Materials & Method">
+    <div class="stack center">
+      <div class="kicker">Materials & Method</div>
+      <h2>The model, the ruler, the referee</h2>
+      <div class="cols" style="grid-template-columns:1fr 1fr 1fr;align-items:stretch;gap:1.3rem">
+        <div class="card">
+          <h3 class="accent">🧠 The Model</h3>
+          <p>Feed-forward net: <strong>2 hidden layers × 64</strong> ReLU units, one linear output.
+             Keras 3 on the PyTorch backend. Small on purpose — the textbook's Housing shape.</p>
+        </div>
+        <div class="card">
+          <h3 class="accent">📏 The Ruler (MAE)</h3>
+          <p><strong>Mean Absolute Error</strong>, in dollars. "On average, how many dollars are we off?"
+             Human-legible — you can <em>feel</em> a dollar error.</p>
+        </div>
+        <div class="card">
+          <h3 class="accent">⚖️ The Referee (k-fold)</h3>
+          <p><strong>K-fold cross-validation</strong>: rotate which slice is held out, average the results.
+             Honest error, not lucky-split error. A separate <em>test set</em> is the final exam.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · ONE CHANGE RULE -->
+  <section class="slide" data-panel="Materials & Method">
+    <div class="cols wide-l">
+      <div class="stack">
+        <div class="kicker">Lab Discipline</div>
+        <h2>The One Change Rule</h2>
+        <ul class="pts">
+          <li>Every experiment changed <strong>exactly one thing</strong>, then re-ran the whole pipeline.</li>
+          <li>Held fixed: <em>same data, same split seed, same weight-init seed, same 50 epochs.</em></li>
+          <li>Every run writes a <strong>timestamped</strong> bundle (log + plots) — nothing overwrites anything.</li>
+          <li><em>This is why the flat result later is a</em> finding, <em>not noise.</em></li>
+        </ul>
+        <div class="callout good" style="margin-top:.4rem">Change three things and the number moves? You've learned nothing. Change one knob per run — and you can trust the answer.</div>
+      </div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart LR
+  I([Issue]) --> B([Branch]) --> P([PR]) --> R([Review]) --> M([Merge])
+  M -. next experiment .-> I
+  classDef s fill:#222220,stroke:#3987e5,color:#fff,stroke-width:1.5px;
+  class I,B,P,R,M s;
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · RESULT: BASELINE -->
+  <section class="slide" data-panel="Results">
+    <div class="cols">
+      <div class="stack">
+        <div class="kicker">Result 1</div>
+        <h2>Does it beat a coin flip?</h2>
+        <ul class="pts">
+          <li><strong>Naive baseline</strong> (predict the average for everyone): <em>~$78,878</em> off, per neighborhood.</li>
+          <li><strong>Our model:</strong> <em class="accent">~$41,407</em> off.</li>
+          <li class="ok"><strong>≈47% lower error</strong> than guessing the mean. Criterion 1 ✅</li>
+        </ul>
+        <div class="chip better" style="font-size:1rem;margin-top:.3rem">▼ −47% error vs. baseline</div>
+      </div>
+      <div class="chart card"><div class="chart-title">Validation MAE — lower is better</div><div id="chart-baseline"></div></div>
+    </div>
+  </section>
+
+  <!-- 10 · TURNAROUND EPOCH -->
+  <section class="slide" data-panel="Results">
+    <div class="cols wide-r">
+      <div class="stack">
+        <div class="kicker">Result 2</div>
+        <h2>When to stop:<br>the turnaround epoch</h2>
+        <ul class="pts">
+          <li>Validation MAE drops fast, then <strong>flattens around epoch ~12–13.</strong></li>
+          <li>After that it just <em>oscillates</em> in a noisy band (min near epoch 22 is within noise). Criterion 2 ✅</li>
+          <li>Lesson from Module 4: the canned script trains <em>past</em> this point. More epochs ≠ better.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="figure"><img src="assets/nc_housing_val_mae.png" alt="Validation MAE per epoch"></div>
+        <div class="figcap">Full 50-epoch validation-MAE curve. The nose-dive ends by ~epoch 13; everything after is jitter.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · WHERE RIGHT / WRONG -->
+  <section class="slide" data-panel="Results">
+    <div class="stack center">
+      <div class="kicker">Results · Diagnostics</div>
+      <h2>Where it's right, where it's wrong</h2>
+      <div class="exhibit-row">
+        <div><div class="figure"><img src="assets/nc_housing_pred_vs_actual.png" alt="Predicted vs actual"></div>
+          <div class="figcap">Ordinary neighborhoods hug the perfect-prediction line — but expensive ones fall <strong>below</strong> it (under-predicted).</div></div>
+        <div><div class="figure"><img src="assets/nc_housing_residuals.png" alt="Residual distribution"></div>
+          <div class="figcap">Errors spike near $0 with a long right tail: a <strong>few big misses</strong>, not broad sloppiness.</div></div>
+      </div>
+      <div class="callout warn" style="margin-top:1.1rem">Hold that thought — the long tail becomes the diagnosis at the end.</div>
+    </div>
+  </section>
+
+  <!-- 12 · EXPERIMENT 0 -->
+  <section class="slide" data-panel="Experiment 0">
+    <div class="cols wide-r">
+      <div class="stack">
+        <div class="kicker">Experiment 0 · The One Change Rule</div>
+        <h2>Delete the impossible houses</h2>
+        <ul class="pts">
+          <li><strong>The one change:</strong> remove the two age ≈ 2000 rows. Nothing else — same seeds, same everything.</li>
+        </ul>
+        <table style="margin-top:.4rem">
+          <thead><tr><th>Metric</th><th class="n">Before</th><th class="n">After</th></tr></thead>
+          <tbody>
+            <tr><td>Test MAE</td><td class="n">$54,370</td><td class="n"><strong class="pos">$44,522</strong></td></tr>
+            <tr><td>Worst single error</td><td class="n"><span class="neg">$6,772,774</span></td><td class="n"><strong>$593,503</strong></td></tr>
+            <tr><td>Rows</td><td class="n">5,637</td><td class="n">5,635</td></tr>
+          </tbody>
+        </table>
+        <div class="callout good" style="margin-top:1rem"><strong>Good data beat a bigger model.</strong> Two rows, ~18% lower test error, and the $6.8M miss is gone. Foreshadowing…</div>
+      </div>
+      <div>
+        <div class="figure"><img src="assets/nc_housing_residuals_before_after.png" alt="Residuals before/after removing bad rows"></div>
+        <div class="figcap">Left (red): the tail drags out past <strong>$6.7M</strong>. Right (green): a tight band ±$200K. Same model — just clean data.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · MAIN EVENT: FOLDS -->
+  <section class="slide" data-panel="The Main Event">
+    <div class="cols">
+      <div class="stack">
+        <div class="kicker">The Main Event · Change #1</div>
+        <h2>More folds<br>(K = 8 → 4)</h2>
+        <ul class="pts">
+          <li><strong>The one change:</strong> cross-validation folds 8 → 4. Model untouched.</li>
+          <li>Moved by ~$300 (CV) / ~$700 (test) — <strong>noise.</strong></li>
+          <li><em>K is a knob on the</em> validation procedure, <em>not the model.</em></li>
+        </ul>
+        <div class="chip better">▼ within fold-to-fold noise</div>
+      </div>
+      <div class="chart card">
+        <div class="chart-title">MAE by fold count — lower is better</div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>K = 8 (baseline)</span><span><i style="background:var(--orange)"></i>K = 4</span></div>
+        <div id="chart-folds"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 · MAIN EVENT: WIDTH -->
+  <section class="slide" data-panel="The Main Event">
+    <div class="cols">
+      <div class="stack">
+        <div class="kicker">The Main Event · Change #2</div>
+        <h2>Wider<br>(64 → 128)</h2>
+        <ul class="pts">
+          <li><strong>The one change:</strong> hidden layers 2×64 → 2×<em>128</em>. Twice the neurons.</li>
+          <li>Wider was <strong>flat-to-slightly-worse.</strong> More parameters did <em>not</em> help.</li>
+          <li>First real hint: this isn't a <em>capacity</em> problem.</li>
+        </ul>
+        <div class="chip worse">▲ slightly worse on test</div>
+      </div>
+      <div class="chart card">
+        <div class="chart-title">MAE by layer width — lower is better</div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>2 × 64 (baseline)</span><span><i style="background:var(--orange)"></i>2 × 128</span></div>
+        <div id="chart-width"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · MAIN EVENT: DEPTH -->
+  <section class="slide" data-panel="The Main Event">
+    <div class="cols">
+      <div class="stack">
+        <div class="kicker">The Main Event · Change #3</div>
+        <h2>Deeper<br>(2 → 3 layers)</h2>
+        <ul class="pts">
+          <li><strong>The one change:</strong> add a third hidden layer. 2×64 → <em>3</em>×64.</li>
+          <li>Deeper was <strong>slightly worse</strong> on both CV and test.</li>
+          <li>Two independent ways to add capacity — <em>wider</em> and <em>deeper</em> — both missed.</li>
+        </ul>
+        <div class="chip worse">▲ worse on both metrics</div>
+      </div>
+      <div class="chart card">
+        <div class="chart-title">MAE by network depth — lower is better</div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>2 layers (baseline)</span><span><i style="background:var(--orange)"></i>3 layers</span></div>
+        <div id="chart-depth"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · THE ENVELOPE -->
+  <section class="slide" data-panel="The Envelope Please">
+    <div class="stack center">
+      <div class="kicker">The Envelope, Please</div>
+      <h2>Nothing helped — and <em>that's</em> the finding</h2>
+      <div class="chart card">
+        <div class="chart-title">Validation MAE across all five runs — the shaded band is the noise floor</div>
+        <div id="chart-scoreboard"></div>
+      </div>
+      <div class="callout" style="margin-top:1.1rem">Five runs, one knob each. Line them up and they're <strong>all the same height.</strong>
+        You cannot make this model better by making it bigger. The negative result <em>is</em> the discovery — so the real question is <strong class="accent">why not?</strong></div>
+    </div>
+  </section>
+
+  <!-- 17 · DIAGNOSIS -->
+  <section class="slide" data-panel="The Diagnosis">
+    <div class="cols wide-l">
+      <div class="stack">
+        <div class="kicker">The Diagnosis</div>
+        <h2>Why bigger didn't win:<br>MSE's long tail</h2>
+        <ul class="pts">
+          <li><strong>RMSE ≈ 1.6 × MAE</strong>, stably. RMSE squares errors first — so a <em>few big misses</em> dominate.</li>
+          <li>Those misses are the rare, expensive neighborhoods.</li>
+          <li><strong>Tail compression:</strong> the worst ~$1.04M block was guessed
+              <em>lower</em> as capacity grew: $427K → $400K → $393K.</li>
+          <li>An MSE-trained model plays it safe on rare high-value homes — and a bigger one plays it <em>safer.</em></li>
+        </ul>
+      </div>
+      <div class="chart card">
+        <div class="chart-title">MAE vs RMSE — the gap is the fingerprint of a few large misses</div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>MAE</span><span><i style="background:var(--violet)"></i>RMSE</span></div>
+        <div id="chart-rmse"></div>
+        <div style="margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--grid)">
+          <div class="chart-title" style="margin-bottom:.5rem">High-value block prediction as capacity grows (actual ≈ $1.04M)</div>
+          <div id="chart-tail"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 · CONCLUSION -->
+  <section class="slide" data-panel="Conclusion">
+    <div class="stack center">
+      <div class="kicker">Conclusion</div>
+      <h2>The ceiling is the <em>signal</em>, not the size</h2>
+      <div class="cols" style="align-items:stretch">
+        <div class="card">
+          <h3 style="margin-bottom:1rem">What we set out to do</h3>
+          <ul class="pts">
+            <li class="ok"><strong>Beat the baseline</strong> — ~47% lower error than the mean.</li>
+            <li class="ok"><strong>Found the turnaround epoch</strong> — ~12–13.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(57,135,229,.4)">
+          <h3 class="accent" style="margin-bottom:1rem">What we learned</h3>
+          <ul class="pts">
+            <li>The model is <strong>not capacity-limited</strong> — width and depth both failed.</li>
+            <li>The ceiling = <em>signal in 7 features</em> + <em>MSE's tail compression</em>, not model size.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout good" style="margin-top:1.2rem">To do better we'd change the <strong>signal</strong> (features / data) or the <strong>loss</strong> — <em>not</em> add layers. That's a far more useful conclusion than "we added layers and the number went down."</div>
+    </div>
+  </section>
+
+  <!-- 19 · SCOPE -->
+  <section class="slide" data-panel="Scope & Limits">
+    <div class="cols">
+      <div class="stack">
+        <div class="kicker">Scope Guard</div>
+        <h2>What we deliberately did <em>not</em> do</h2>
+        <p>A science-fair board should say what it <em>isn't</em>. Over-scoping is the #1 way these projects die.
+           We wrote the guardrails on day one and held the line.</p>
+        <div class="callout" style="margin-top:1rem">That discipline is <em>why there's a finished project to present.</em></div>
+      </div>
+      <div class="card">
+        <ul class="pts">
+          <li class="no"><em>No</em> general ACS cleaning pipeline — only fixed <strong>this file's</strong> known bad rows.</li>
+          <li class="no"><em>No</em> re-deriving features from the raw Census API — used the pre-built CSV.</li>
+          <li class="no"><em>No</em> deployment, <em>no</em> UI — model + evaluation only.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 20 · FUTURE WORK -->
+  <section class="slide" data-panel="Future Work">
+    <div class="stack center">
+      <div class="kicker">Future Work</div>
+      <h2>The next level</h2>
+      <div class="mermaid-wrap" style="margin-bottom:1.1rem">
+        <pre class="mermaid">
+flowchart LR
+  N["Do better?"]:::root
+  N --> F["Signal, not size<br/>engineer features · fresh 2020–24 ACS"]:::f
+  N --> L["Fix the flinch<br/>Huber loss · log-transform target"]:::f
+  N --> E["Stop earlier<br/>read turnaround off the MSE curve"]:::f
+  classDef root fill:#222220,stroke:#3987e5,color:#fff,stroke-width:2px;
+  classDef f fill:#161615,stroke:#898781,color:#c3c2b7;
+        </pre>
+      </div>
+      <div class="callout">Notice: <strong>none of it is "add more layers."</strong> The experiments told us to stop tuning size and start changing the signal and the loss. The known limit — rare high-value neighborhoods — is a <em>data-coverage</em> problem, not a tuning problem.</div>
+    </div>
+  </section>
+
+  <!-- 21 · REFLECTION -->
+  <section class="slide" data-panel="Reflection">
+    <div class="cols wide-l">
+      <div class="stack">
+        <div class="kicker">Reflection</div>
+        <h2>What the process taught us</h2>
+        <ul class="pts">
+          <li>The <strong>One Change Rule</strong> turned a flat result into a <em>trustworthy</em> one.</li>
+          <li>Timestamped runs → every claim on this board is reproducible from a stamp.</li>
+          <li>The biggest single win was <strong>data cleaning</strong>, not modeling.</li>
+          <li>"Define good enough first" stopped us chasing a bigger model forever.</li>
+        </ul>
+      </div>
+      <div class="card center" style="text-align:center">
+        <div style="font-size:2.6rem;line-height:1.3">🧪</div>
+        <p style="margin:.6rem auto 0;text-align:center">The real lesson wasn't about neural networks.
+          It was that <strong>disciplined process</strong> is what let us confidently say
+          <em>"bigger won't help."</em></p>
+        <p style="margin:.8rem auto 0;text-align:center;color:var(--muted);font-size:.95rem">Without it, five nearly-identical numbers would've looked like failure — instead of a finding.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 22 · CREDITS -->
+  <section class="slide" data-panel="Credits">
+    <div class="stack center">
+      <div class="kicker">Credits & Artifacts</div>
+      <h2>Everything here is reproducible</h2>
+      <div class="cols" style="align-items:stretch">
+        <div class="card">
+          <h3 class="accent">Data & stack</h3>
+          <ul class="pts" style="gap:.5rem">
+            <li>D. Michael Senter · <code>NC_Housing_Prices_2018.csv</code> (ACS 2018 5-yr + TIGER/Line)</li>
+            <li>Python · pandas · Keras 3 (PyTorch) · matplotlib</li>
+            <li>GitHub Codespaces · Sacred Flow</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="accent">Reproduce it</h3>
+          <ul class="pts" style="gap:.5rem">
+            <li><code>run.sh</code> → <code>nc_housing_model_v2.py</code></li>
+            <li>Every run's log + plots live in <code>outputs/</code> under a shared timestamp</li>
+            <li>Series reconciled in <code>sitreps/CHECKPOINT_Session_20260716.md</code></li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:1.4rem;text-align:center">CSC-114 · Artificial Intelligence I · Tabular cohort · Modules 5–8 mini-project</p>
+      <div style="text-align:center;margin-top:1rem;color:var(--muted)">— thanks for visiting the booth 🔬 —</div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <span class="panel-label" id="panel">Science Fair</span>
+  <span class="count"><span id="cur">01</span> / <span id="tot">22</span></span>
+</footer>
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <button id="next" aria-label="Next">›</button>
+</div>
+<div id="bar"><i></i></div>
+
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+  startOnLoad:true, theme:"base", securityLevel:"loose",
+  themeVariables:{
+    fontFamily:"system-ui,-apple-system,'Segoe UI',sans-serif",
+    background:"#1a1a19", primaryColor:"#222220", primaryTextColor:"#ffffff",
+    primaryBorderColor:"#3987e5", lineColor:"#898781", textColor:"#c3c2b7",
+    edgeLabelBackground:"#161615"
+  }
+});
+</script>
+
+<script>
+/* ================= CHART ENGINE (SVG bar charts, dark, 0-based) ================= */
+const C = { blue:"#3987e5", orange:"#d95926", ref:"#6f6e69", violet:"#9085e9",
+            ink:"#ffffff", ink2:"#c3c2b7", muted:"#898781", grid:"#2c2c2a", axis:"#383835" };
+const usd = v => "$"+Math.round(v).toLocaleString("en-US");
+
+/* Grouped vertical bars. spec:
+   { max, fmt, groups:[{label, bars:[{value,color,tag}]}], band:{lo,hi,label}, gridStep } */
+function grouped(el, spec){
+  const W=560, H=320, padL=54, padR=18, padT=26, padB=52;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const max=spec.max, y=v=>padT+plotH*(1-v/max);
+  const fmt=spec.fmt||usd;
+  const g=spec.groups, gw=plotW/g.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+
+  // gridlines
+  const step=spec.gridStep||max/4;
+  for(let v=0;v<=max+1;v+=step){
+    s+=`<line x1="${padL}" x2="${W-padR}" y1="${y(v)}" y2="${y(v)}" stroke="${C.grid}" stroke-width="1"/>`;
+    s+=`<text x="${padL-8}" y="${y(v)+4}" fill="${C.muted}" font-size="11" text-anchor="end" font-family="system-ui">${fmt(v)}</text>`;
+  }
+  // noise band
+  if(spec.band){
+    const yh=y(spec.band.hi), yl=y(spec.band.lo);
+    s+=`<rect x="${padL}" y="${yh}" width="${plotW}" height="${yl-yh}" fill="${C.blue}" opacity="0.10"/>`;
+    s+=`<line x1="${padL}" x2="${W-padR}" y1="${yh}" y2="${yh}" stroke="${C.blue}" stroke-dasharray="4 4" opacity="0.5" stroke-width="1"/>`;
+    s+=`<line x1="${padL}" x2="${W-padR}" y1="${yl}" y2="${yl}" stroke="${C.blue}" stroke-dasharray="4 4" opacity="0.5" stroke-width="1"/>`;
+    if(spec.band.label) s+=`<text x="${padL+6}" y="${padT+12}" fill="${C.blue}" font-size="11" text-anchor="start" font-family="system-ui" opacity="0.85">${spec.band.label}</text>`;
+  }
+  // baseline
+  s+=`<line x1="${padL}" x2="${W-padR}" y1="${y(0)}" y2="${y(0)}" stroke="${C.axis}" stroke-width="1.5"/>`;
+
+  g.forEach((grp,gi)=>{
+    const n=grp.bars.length, bw=Math.min(58,(gw-24)/n), inner=n*bw+(n-1)*10;
+    const x0=padL+gw*gi+(gw-inner)/2;
+    grp.bars.forEach((b,bi)=>{
+      const bx=x0+bi*(bw+10), by=y(b.value), bh=y(0)-by;
+      s+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="4" fill="${b.color}">`
+        +`<title>${grp.label}: ${fmt(b.value)}</title></rect>`;
+      s+=`<text x="${bx+bw/2}" y="${by-8}" fill="${C.ink}" font-size="12.5" font-weight="700" text-anchor="middle" font-family="system-ui">${fmt(b.value)}</text>`;
+      if(b.tag) s+=`<text x="${bx+bw/2}" y="${by-24}" fill="${C.muted}" font-size="10.5" text-anchor="middle" font-family="system-ui">${b.tag}</text>`;
+    });
+    s+=`<text x="${padL+gw*gi+gw/2}" y="${H-padB+22}" fill="${C.ink2}" font-size="12.5" font-weight="600" text-anchor="middle" font-family="system-ui">${grp.label}</text>`;
+  });
+  s+=`</svg>`;
+  el.innerHTML=s;
+}
+
+const CHARTS = {
+  "chart-baseline": ()=>grouped(document.getElementById("chart-baseline"),{
+    max:85000, gridStep:20000,
+    groups:[{label:"Validation MAE",bars:[
+      {value:78878,color:C.ref,tag:"naive"},
+      {value:41407,color:C.blue,tag:"model"}]}]}),
+
+  "chart-folds": ()=>grouped(document.getElementById("chart-folds"),{
+    max:50000, gridStep:10000,
+    groups:[
+      {label:"Cross-val MAE",bars:[{value:41762,color:C.blue},{value:41451,color:C.orange}]},
+      {label:"Test MAE",bars:[{value:42870,color:C.blue},{value:42165,color:C.orange}]}]}),
+
+  "chart-width": ()=>grouped(document.getElementById("chart-width"),{
+    max:50000, gridStep:10000,
+    groups:[
+      {label:"Cross-val MAE",bars:[{value:41451,color:C.blue},{value:41786,color:C.orange}]},
+      {label:"Test MAE",bars:[{value:42165,color:C.blue},{value:43409,color:C.orange}]}]}),
+
+  "chart-depth": ()=>grouped(document.getElementById("chart-depth"),{
+    max:50000, gridStep:10000,
+    groups:[
+      {label:"Cross-val MAE",bars:[{value:41451,color:C.blue},{value:42991,color:C.orange}]},
+      {label:"Test MAE",bars:[{value:42165,color:C.blue},{value:42999,color:C.orange}]}]}),
+
+  "chart-scoreboard": ()=>grouped(document.getElementById("chart-scoreboard"),{
+    max:50000, gridStep:10000,
+    band:{lo:41375,hi:42991},
+    groups:[
+      {label:"Baseline",  bars:[{value:41762,color:C.blue,tag:"2×64 K8"}]},
+      {label:"Folds",     bars:[{value:41451,color:C.blue,tag:"2×64 K4"}]},
+      {label:"Width",     bars:[{value:41786,color:C.blue,tag:"2×128"}]},
+      {label:"Depth",     bars:[{value:42991,color:C.blue,tag:"3×64"}]},
+      {label:"+MSE",      bars:[{value:41375,color:C.blue,tag:"2×64 K4"}]}]}),
+
+  "chart-rmse": ()=>grouped(document.getElementById("chart-rmse"),{
+    max:75000, gridStep:25000,
+    groups:[
+      {label:"Cross-val",bars:[{value:41375,color:C.blue},{value:64988,color:C.violet}]},
+      {label:"Test",bars:[{value:42123,color:C.blue},{value:65576,color:C.violet}]}]}),
+
+  "chart-tail": ()=>grouped(document.getElementById("chart-tail"),{
+    max:1100000, gridStep:500000, fmt:v=>"$"+(v/1e6).toFixed(1)+"M",
+    groups:[
+      {label:"actual",bars:[{value:1040000,color:C.ref}]},
+      {label:"2×64",bars:[{value:427000,color:C.blue}]},
+      {label:"2×128",bars:[{value:400000,color:C.orange}]},
+      {label:"3×64",bars:[{value:393000,color:C.orange}]}]}),
+};
+
+/* ================= DECK NAVIGATION ================= */
+const slides=[...document.querySelectorAll(".slide")];
+const tot=slides.length, rendered=new Set();
+document.getElementById("tot").textContent=String(tot).padStart(2,"0");
+let idx=0;
+
+function renderCharts(slide){
+  slide.querySelectorAll("[id^='chart-']").forEach(node=>{
+    if(rendered.has(node.id)) return;
+    if(CHARTS[node.id]){ CHARTS[node.id](); rendered.add(node.id); }
+  });
+}
+function show(i){
+  idx=Math.max(0,Math.min(tot-1,i));
+  slides.forEach((s,k)=>s.classList.toggle("active",k===idx));
+  const s=slides[idx];
+  document.getElementById("cur").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("panel").textContent=s.dataset.panel||"";
+  document.querySelector("#bar>i").style.width=((idx)/(tot-1)*100)+"%";
+  history.replaceState(null,"","#"+(idx+1));
+  renderCharts(s);
+}
+const next=()=>show(idx+1), prev=()=>show(idx-1);
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+addEventListener("keydown",e=>{
+  if(["ArrowRight"," ","PageDown"].includes(e.key)){e.preventDefault();next();}
+  else if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==="Home")show(0);
+  else if(e.key==="End")show(tot-1);
+  else if(e.key==="f"||e.key==="F"){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+});
+// touch swipe
+let tx=0;
+addEventListener("touchstart",e=>tx=e.touches[0].clientX,{passive:true});
+addEventListener("touchend",e=>{const d=e.changedTouches[0].clientX-tx; if(Math.abs(d)>50)(d<0?next:prev)();},{passive:true});
+
+const start=Math.max(0,(parseInt(location.hash.slice(1))||1)-1);
+show(start);
+</script>
+</body>
+</html>
