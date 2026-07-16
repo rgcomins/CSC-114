@@ -1,0 +1,19 @@
+# CSC-114 Module 5/6 — NC Housing Price Regression dependencies
+# ------------------------------------------------------------------
+# Stack: Keras 3 running on the PyTorch backend, plus the data +
+# plotting libraries. Floor-pinned (>=) so a fresh Codespace pulls a
+# recent, compatible set; tighten to == if you want a frozen build for
+# the presentation.
+
+keras>=3.0        # the high-level API we write (build/compile/fit/predict)
+torch>=2.0        # backend engine — KERAS_BACKEND=torch in the script
+numpy>=1.26       # array math
+pandas>=2.0       # CSV load + cleaning
+matplotlib>=3.8   # the four output plots
+
+# NOTE — CPU-only torch (optional, smaller/faster in a GPU-less Codespace):
+# the default PyPI torch wheel bundles CUDA libraries you won't use on a
+# standard Codespace. To grab the leaner CPU build instead, install torch
+# separately first:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# then run the rest with:  pip install -r requirements.txt

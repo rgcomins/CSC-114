@@ -63,10 +63,10 @@ TARGET_SCALE = 100_000                   # same convention as the CA Housing exa
 # read itself (see load_and_clean). Filtering at read time means junk columns
 # can't sneak in and quietly break a later dropna().
 #
-# NOTE (unchanged from v1 on purpose): this list carries "total_rooms". In the
-# source file, total_rooms and total_bedrooms are identical duplicates, so which
-# of the two names appears here changes no numbers — it's a labeling question,
-# and we're deliberately leaving it alone until the post-v2 "one change" step.
+# NOTE: the CSV header for this feature is literally "total_rooms", so that is
+# the name we must use here (usecols matches header names exactly). Despite the
+# name, the values in this column are actually total_bedrooms — the header label
+# is misleading, but we keep it as-is to match the file rather than renaming.
 KEEP_COLS = [
     "population",
     "households",
@@ -111,6 +111,16 @@ class _Tee:
 
     def __init__(self, *streams):
         self._streams = streams
+
+    def __getattr__(self, name):
+        # Delegate anything we don't define (e.g. ``encoding``, ``isatty``,
+        # ``fileno``) to the first stream — the real console. Keras's progress
+        # bar queries ``sys.stdout.encoding`` during model.evaluate(); without
+        # this passthrough that lookup raises AttributeError and kills the run.
+        # Guard against recursion while _streams is still being set up.
+        if name == "_streams":
+            raise AttributeError(name)
+        return getattr(self._streams[0], name)
 
     def write(self, data):
         for s in self._streams:

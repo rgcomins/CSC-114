@@ -1,0 +1,4 @@
+Run timestamp: 20260716_110607
+Writing plots and this log to: C:\Users\cominsr6423\Documents\GitHub\CSC-114\project\outputs
+Console log: outputs\run_log_20260716_110607.txt
+
