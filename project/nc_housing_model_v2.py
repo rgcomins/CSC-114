@@ -177,11 +177,12 @@ def get_model(input_dim):
     - Loss is MSE (what training minimizes); MAE is the human-readable metric
       (average dollars off, once we multiply back by TARGET_SCALE).
     - Regression has no "accuracy" — that's a classification idea.
+    Testing with 128 per layer.
     """
     model = keras.Sequential(
         [
-            layers.Dense(64, activation="relu"),
-            layers.Dense(64, activation="relu"),
+            layers.Dense(128, activation="relu"),
+            layers.Dense(128),
             layers.Dense(1),
         ]
     )
@@ -244,7 +245,7 @@ def main(data_path, outdir, stamp, show=False, quick=False, final_epochs=None):
     # on which rows got held out. K-fold runs K models, each leaving out a
     # different slice, and averages — a steadier read on how the setup
     # generalizes. This runs inside the 80% training pool, before the final fit.
-    k = 8
+    k = 4  # 7/16 - changed from 8-fold to 4-fold
     num_val_samples = len(x_train) // k
     num_epochs = 10 if quick else 50
     all_scores = []

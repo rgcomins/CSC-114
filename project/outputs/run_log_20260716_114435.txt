@@ -1,6 +1,6 @@
-Run timestamp: 20260716_110751
+Run timestamp: 20260716_114435
 Writing plots and this log to: C:\Users\cominsr6423\Documents\GitHub\CSC-114\project\outputs
-Console log: outputs\run_log_20260716_110751.txt
+Console log: outputs\run_log_20260716_114435.txt
 
 Raw rows: 5637
 Raw columns: ['population', 'households', 'median_income', 'median_house_value', 'total_rooms', 'latitude', 'longitude', 'housing_median_age']
@@ -15,41 +15,33 @@ Processing fold #1
 Processing fold #2
 Processing fold #3
 Processing fold #4
-Processing fold #5
-Processing fold #6
-Processing fold #7
-Processing fold #8
-Per-fold MAE (scaled): [0.426, 0.399, 0.384, 0.42, 0.419, 0.457, 0.407, 0.429]
-Mean MAE (scaled): 0.418  ->  $41,762 off, on average
+Per-fold MAE (scaled): [0.415, 0.404, 0.415, 0.423]
+Mean MAE (scaled): 0.415  ->  $41,451 off, on average
 Processing fold #1
 Processing fold #2
 Processing fold #3
 Processing fold #4
-Processing fold #5
-Processing fold #6
-Processing fold #7
-Processing fold #8
-Saved plot to outputs\nc_housing_val_mae_20260716_110751.png
-Saved plot to outputs\nc_housing_val_mae_truncated_20260716_110751.png
+Saved plot to outputs\nc_housing_val_mae_20260716_114435.png
+Saved plot to outputs\nc_housing_val_mae_truncated_20260716_114435.png
 
-[1m 1/36[0m [37m====================[0m [1m0s[0m 3ms/step - loss: 0.3200 - mean_absolute_error: 0.4071
-[1m24/36[0m [32m=============[0m[37m=======[0m [1m0s[0m 2ms/step - loss: 0.4397 - mean_absolute_error: 0.4322
-[1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 2ms/step - loss: 0.4333 - mean_absolute_error: 0.4287
-Test MAE (scaled): 0.429  ->  $42,870 off, on average
+[1m 1/36[0m [37m====================[0m [1m0s[0m 3ms/step - loss: 0.4594 - mean_absolute_error: 0.4870
+[1m24/36[0m [32m=============[0m[37m=======[0m [1m0s[0m 2ms/step - loss: 0.4678 - mean_absolute_error: 0.4244
+[1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 2ms/step - loss: 0.4534 - mean_absolute_error: 0.4216
+Test MAE (scaled): 0.422  ->  $42,165 off, on average
 
 [1m 1/36[0m [37m====================[0m [1m0s[0m 2ms/step
 [1m36/36[0m [32m====================[0m[37m[0m [1m0s[0m 1ms/step
 
 First 5 test predictions vs. actual:
-  Predicted: $124,394   Actual: $110,000   Error: $14,394
-  Predicted: $138,576   Actual: $150,400   Error: $-11,824
-  Predicted: $151,985   Actual: $244,200   Error: $-92,215
-  Predicted: $133,298   Actual: $137,700   Error: $-4,402
-  Predicted: $239,411   Actual: $222,800   Error: $16,611
-Saved plot to outputs\nc_housing_pred_vs_actual_20260716_110751.png
+  Predicted: $151,249   Actual: $110,000   Error: $41,249
+  Predicted: $116,262   Actual: $150,400   Error: $-34,138
+  Predicted: $142,554   Actual: $244,200   Error: $-101,646
+  Predicted: $107,793   Actual: $137,700   Error: $-29,907
+  Predicted: $214,800   Actual: $222,800   Error: $-8,000
+Saved plot to outputs\nc_housing_pred_vs_actual_20260716_114435.png
 
 Worst residuals — check these for data vs. model issues:
-  Predicted=$124,907  Actual=$608,200  Error=$-483,293
+  Predicted=$127,023  Actual=$608,200  Error=$-481,177
 population              2604.000000
 households               943.000000
 median_income          41365.000000
@@ -60,7 +52,7 @@ longitude                -80.776266
 housing_median_age        34.000000
 Name: 3140, dtype: float64
 
-  Predicted=$907,811  Actual=$1,453,800  Error=$-545,989
+  Predicted=$874,332  Actual=$1,453,800  Error=$-579,468
 population            1.164000e+03
 households            3.870000e+02
 median_income         2.500010e+05
@@ -71,7 +63,7 @@ longitude            -8.081819e+01
 housing_median_age    4.500000e+01
 Name: 3261, dtype: float64
 
-  Predicted=$480,479  Actual=$1,044,300  Error=$-563,821
+  Predicted=$453,999  Actual=$1,044,300  Error=$-590,301
 population            2.474000e+03
 households            8.030000e+02
 median_income         1.369950e+05
@@ -82,4 +74,4 @@ longitude            -8.083598e+01
 housing_median_age    5.100000e+01
 Name: 3358, dtype: float64
 
-Saved plot to outputs\nc_housing_residuals_20260716_110751.png
+Saved plot to outputs\nc_housing_residuals_20260716_114435.png
