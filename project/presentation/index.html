@@ -680,14 +680,19 @@ flowchart LR
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
-  startOnLoad:true, theme:"base", securityLevel:"loose",
+  startOnLoad:false, theme:"base", securityLevel:"loose",
+  flowchart:{htmlLabels:true, useMaxWidth:true},
   themeVariables:{
     fontFamily:"system-ui,-apple-system,'Segoe UI',sans-serif",
     background:"#1a1a19", primaryColor:"#222220", primaryTextColor:"#ffffff",
     primaryBorderColor:"#3987e5", lineColor:"#898781", textColor:"#c3c2b7",
-    edgeLabelBackground:"#161615"
+    edgeLabelBackground:"#161615", clusterBkg:"#161615"
   }
 });
+window.mermaid = mermaid;
+// diagrams must render only while their slide is visible (hidden = 0-width = broken layout)
+const active = document.querySelector(".slide.active");
+if (active && window.renderMermaid) window.renderMermaid(active);
 </script>
 
 <script>
@@ -801,6 +806,15 @@ function renderCharts(slide){
     if(CHARTS[node.id]){ CHARTS[node.id](); rendered.add(node.id); }
   });
 }
+// Lazily render mermaid diagrams once, only while their slide is visible.
+function renderMermaid(slide){
+  if(!window.mermaid) return;
+  const nodes=[...slide.querySelectorAll(".mermaid:not([data-mmdone])")];
+  if(!nodes.length) return;
+  nodes.forEach(n=>n.setAttribute("data-mmdone","1"));
+  try{ window.mermaid.run({nodes}); }catch(e){ nodes.forEach(n=>n.removeAttribute("data-mmdone")); }
+}
+window.renderMermaid=renderMermaid;
 function show(i){
   idx=Math.max(0,Math.min(tot-1,i));
   slides.forEach((s,k)=>s.classList.toggle("active",k===idx));
@@ -810,6 +824,7 @@ function show(i){
   document.querySelector("#bar>i").style.width=((idx)/(tot-1)*100)+"%";
   history.replaceState(null,"","#"+(idx+1));
   renderCharts(s);
+  renderMermaid(s);
 }
 const next=()=>show(idx+1), prev=()=>show(idx-1);
 document.getElementById("next").onclick=next;
